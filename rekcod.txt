@@ -1,0 +1,128 @@
+powershell , then change directory and then paste it exactly 
+
+//for MySQL + wordpress
+Set-Content -Path docker-compose.yml -Value @'
+services:
+  db:
+    image: mysql:8.0
+    container_name: wp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wppass
+    volumes:
+      - wp_db_data:/var/lib/mysql
+    restart: always
+
+  wordpress:
+    image: wordpress:latest
+    container_name: my-wordpress
+    depends_on:
+      - db
+    ports:
+      - "8000:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wppass
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp_files:/var/www/html
+    restart: always
+
+volumes:
+  wp_db_data:
+  wp_files:
+'@
+
+docker compose up -d
+docker compose ps
+
+///for MySQL only 
+
+create a directory , cd in powershell , do all these in that directory 
+
+Set-Content -Path docker-compose.yml -Value @'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: my-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: college
+      MYSQL_USER: student
+      MYSQL_PASSWORD: student123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  mysql_data:
+'@
+
+docker compose up -d
+docker compose ps
+
+//redis
+Set-Content -Path docker-compose.yml -Value @'
+services:
+  redis:
+    image: redis:latest
+    container_name: my-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  redis_data:
+'@
+
+docker compose up -d
+docker compose ps
+docker exec -it my-redis redis-cli
+
+//python 
+
+Set-Content -Path app.py -Value @'
+from flask import Flask
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "<h1>Hello from Python inside Docker Compose!</h1>"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+'@
+
+Set-Content -Path requirements.txt -Value @'
+flask
+'@
+
+Set-Content -Path Dockerfile -Value @'
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app.py .
+EXPOSE 5000
+CMD ["python", "app.py"]
+'@
+
+Set-Content -Path docker-compose.yml -Value @'
+services:
+  python-app:
+    build: .
+    container_name: my-python
+    ports:
+      - "5000:5000"
+    restart: always
+'@
+
+docker compose up -d --build
+docker compose ps

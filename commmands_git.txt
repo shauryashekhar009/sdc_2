@@ -1,0 +1,295 @@
+==============================================================
+GIT NOTES: diff, log, branching, merge, rebase, undoing, stash
+==============================================================
+
+
+--------------------------------------------------------------
+1. GIT DIFF
+--------------------------------------------------------------
+Shows WHAT changed, line by line, without committing.
+
+  git diff                  working directory vs staging (unstaged changes)
+  git diff --staged         staging vs last commit (what your next commit will contain)
+  git diff main feature     differences between two branches
+  git diff abc123           working directory vs a specific commit
+
+Lines starting with "-" were removed. Lines starting with "+" were added.
+Use it to review your work before "git add" / "git commit".
+
+
+--------------------------------------------------------------
+2. GIT LOG
+--------------------------------------------------------------
+Shows commit history.
+
+  git log                         full history
+  git log --oneline               one line per commit
+  git log --oneline --graph --all branch tree view
+  git log -5                      last 5 commits
+  git log -p                      show the changes in each commit
+  git log --author="Ali"          filter by author
+
+
+--------------------------------------------------------------
+3. FINDING A COMMIT HASH (COMMIT ID)
+--------------------------------------------------------------
+Git does not use commit numbers. Each commit has a unique
+40-character ID (hash), like a1b2c3d4e5f6...
+
+  git log --oneline          short hash (first 7 chars is enough)
+  git log                    full 40-character hash
+  git rev-parse HEAD         full hash of current commit
+  git rev-parse --short HEAD short hash of current commit
+  git reflog                 hashes of everywhere HEAD has been
+
+After committing you also see it: [main a1b2c3d] your message
+On GitHub/GitLab it is shown next to each commit.
+
+Using a hash in commands:
+  git show a1b2c3d
+  git revert a1b2c3d
+  git reset --hard a1b2c3d
+  git cherry-pick a1b2c3d
+
+You don't always need the hash:
+  HEAD       current commit
+  HEAD~1     one commit before
+  HEAD~3     three commits before
+  main       branch names point to commits
+  v1.0       tags point to commits
+
+
+--------------------------------------------------------------
+4. BRANCHING
+--------------------------------------------------------------
+A branch is just a movable pointer to a commit.
+
+git branch  (manage branches)
+  git branch                list local branches (* = current)
+  git branch feature        create a branch (does not switch)
+  git branch -d feature     delete (only if merged)
+  git branch -D feature     force delete (unmerged work is lost)
+  git branch -m new-name    rename current branch
+
+git switch  (move to another branch)
+  git switch feature        go to an existing branch
+  git switch -c feature     create and go
+  git switch -              go back to the previous branch
+
+Uncommitted changes come with you if they don't conflict.
+Otherwise Git refuses: commit or stash first.
+
+
+--------------------------------------------------------------
+5. GIT MERGE
+--------------------------------------------------------------
+Brings another branch's work into your CURRENT branch.
+
+  git switch main
+  git merge feature
+
+CASE 1: Fast-forward
+main has not moved since feature branched, so Git just moves
+the pointer. No new commit is created.
+
+  Before:  A---B (main)
+                \
+                 C---D (feature)
+
+  After:   A---B---C---D (main, feature)
+
+CASE 2: Three-way merge
+Both branches have new commits, so Git creates a MERGE COMMIT
+with two parents.
+
+  Before:  A---B---E (main)
+                \
+                 C---D (feature)
+
+  After:   A---B---E---M (main)
+                \     /
+                 C---D (feature)
+
+CONFLICTS
+If both branches edited the same lines, Git stops and marks the file:
+
+  <<<<<<< HEAD
+  your version
+  =======
+  their version
+  >>>>>>> feature
+
+Fix: edit the file to the final result, remove the markers, then
+  git add <file>
+  git commit
+To cancel the merge: git merge --abort
+
+Pros: history is preserved exactly as it happened; safe.
+Cons: history gets cluttered with merge commits.
+
+
+--------------------------------------------------------------
+6. GIT REBASE
+--------------------------------------------------------------
+Also combines branches, but by REPLAYING your commits on top of
+another branch, producing a straight line.
+
+  git switch feature
+  git rebase main
+
+  Before:  A---B---E (main)
+                \
+                 C---D (feature)
+
+  After:   A---B---E---C'---D' (feature)
+
+C' and D' are NEW commits (new hashes) with the same changes.
+Then fast-forward main:
+
+  git switch main
+  git merge feature
+
+CONFLICTS
+Fix the file, then:
+  git add <file>
+  git rebase --continue
+To cancel: git rebase --abort
+
+GOLDEN RULE
+Never rebase commits you have already pushed and others use.
+Rebase rewrites history, which breaks teammates' copies.
+Rebase only your own local/feature work.
+
+MERGE vs REBASE
+  Merge:  safe, keeps true history, adds merge commits.
+  Rebase: clean linear history, rewrites commits.
+  Common practice: rebase your feature onto main to update it,
+  then merge it into main.
+
+
+--------------------------------------------------------------
+7. UNDOING THINGS
+--------------------------------------------------------------
+
+git restore <file>
+  Discards unstaged changes in a file, back to the last
+  committed/staged version. THIS CANNOT BE UNDONE.
+    git restore app.js
+
+git restore --staged <file>
+  Unstages a file but keeps your edits.
+    git restore --staged app.js
+
+git commit --amend
+  Replaces the last commit. Use it to fix the message or add a
+  forgotten file.
+    git add forgotten.js
+    git commit --amend -m "Better message"
+    git commit --amend --no-edit        (keep the message)
+  Don't amend a commit you have already pushed.
+
+git revert <commit>
+  Undoes a commit by creating a NEW commit with the opposite
+  changes. History is untouched, so it is safe for pushed commits.
+    git revert abc123
+
+git reset <commit>
+  Moves the current branch back to an earlier commit, erasing
+  later commits from the branch. Three modes:
+
+  Mode              Commits    Staging          Your files
+  --------------------------------------------------------------
+  --soft            undone     kept staged      kept
+  --mixed (default) undone     unstaged         kept
+  --hard            undone     cleared          DELETED
+
+    git reset --soft HEAD~1     undo last commit, keep everything staged
+    git reset HEAD~1            undo last commit, keep changes unstaged
+    git reset --hard HEAD~1     undo last commit AND throw away changes
+
+  HEAD~1 means "one commit before the current one".
+  Avoid reset on pushed commits (use revert instead).
+
+git reflog
+  Your safety net. Logs every place HEAD has been, including
+  commits lost through reset.
+    git reflog
+    # abc123 HEAD@{0}: reset: moving to HEAD~1
+    # def456 HEAD@{1}: commit: add login
+    git reset --hard def456     get the lost commit back
+  Entries expire after about 90 days.
+
+
+--------------------------------------------------------------
+8. GOING BACK FORWARD AFTER A RESET
+--------------------------------------------------------------
+Question: after "git reset --soft HEAD~1", can we go forward again?
+Answer: YES. The undone commit is not deleted. It still exists in
+Git, you just are not pointing at it anymore.
+
+  A---B---C (main, HEAD)
+
+  git reset --soft HEAD~1
+
+  A---B (main, HEAD)      C is now orphaned but still stored
+
+Your changes from C are still staged, so nothing is lost.
+
+Ways to get back to C:
+
+  1. Find C's hash in reflog, then reset to it
+       git reflog
+       # b2c3d4e HEAD@{0}: reset: moving to HEAD~1
+       # c3d4e5f HEAD@{1}: commit: add login     <- this is C
+       git reset --soft c3d4e5f
+     Shortcut:
+       git reset --soft HEAD@{1}
+
+  2. Use ORIG_HEAD (quickest way to undo a reset you just did)
+       git reset --soft ORIG_HEAD
+
+  3. Just commit again
+       git commit -m "message"
+     This creates a NEW commit with the same changes but a
+     different hash than the original C.
+
+Important points:
+  - "HEAD+1" does not exist. Git can only go backward from HEAD
+    (HEAD~1), because a commit knows its parent but not its
+    children. That is why you need the hash, reflog, or ORIG_HEAD
+    to go forward again.
+  - This works for --mixed too.
+  - With --hard you can still recover the commit the same ways,
+    but any UNCOMMITTED changes that were discarded are gone for good.
+  - Orphaned commits are kept for about 90 days before Git
+    cleans them up, so recover them soon.
+
+
+--------------------------------------------------------------
+9. GIT STASH
+--------------------------------------------------------------
+Temporarily shelves uncommitted changes so you get a clean working
+directory, for example when you need to switch branches mid-work.
+
+  git stash                       shelve tracked changes
+  git stash -u                    also include untracked (new) files
+  git stash push -m "login WIP"   stash with a name
+  git stash list                  see all stashes
+  git stash pop                   restore latest stash AND delete it
+  git stash apply                 restore but keep it in the list
+  git stash drop                  delete latest stash
+  git stash show -p               preview what's in it
+
+Target a specific stash with stash@{1}:
+  git stash pop stash@{1}
+
+
+--------------------------------------------------------------
+QUICK REFERENCE: DANGER LEVELS
+--------------------------------------------------------------
+  Safe:        diff, log, status, branch (list), reflog, stash, revert
+  Careful:     amend, rebase, reset --soft/--mixed (only on local commits)
+  Destructive: restore <file>, reset --hard, branch -D, clean -fd
+  (Destructive commands can discard uncommitted work permanently.)
+
+==============================================================

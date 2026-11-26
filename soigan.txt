@@ -1,0 +1,11 @@
+docker pull jasonrivers/nagios:latest
+docker run -d --name nagios -p 8081:80 jasonrivers/nagios:latest
+docker ps
+docker logs nagios
+
+docker stop nagios
+docker start nagios
+docker rm -f nagios
+docker rmi jasonrivers/nagios:latest
+
+//then open port 8081 to see the nagios thing username nagiosadmin password nagios
