@@ -22,3 +22,4 @@ class diagrams
 ** then the third box is the methods box use + only and also write in one word what that method does , connect each box 
 -----> empty trinaggular box shows is a parent of , child and parent classes relationships can also be shown her e
 and dependency relationship shows ----> filled triangle 
+* for multiple relationships , + for one relationship 
