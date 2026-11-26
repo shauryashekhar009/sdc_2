@@ -1,0 +1,44 @@
+docker stop nagios
+
+minikube start --driver=docker
+minikube status
+kubectl get nodes
+
+kubectl create deployment mynginx --image=nginx
+kubectl get deployments
+kubectl get pods
+kubectl describe deployment mynginx
+
+kubectl expose deployment mynginx --type=NodePort --port=80
+kubectl get services
+
+kubectl scale deployment mynginx --replicas=4
+kubectl get deployments
+kubectl get pods -o wide
+
+
+//new powershell
+minikube service mynginx --url
+
+//powershell 3
+kubectl port-forward service/mynginx 8081:80
+
+//powershell 4
+//leave this be , not that important
+
+
+//back to first powershell1 
+kubectl get pods
+kubectl delete pod <paste-one-pod-name-here>
+kubectl get pods
+
+kubectl logs deployment/mynginx
+
+kubectl scale deployment mynginx --replicas=1
+kubectl get pods
+
+kubectl delete service mynginx
+kubectl delete deployment mynginx
+kubectl get all
+
+minikube stop
