@@ -1,0 +1,24 @@
+use case diagram : 
+* it consists of oval boxes showing the use cases , stick figures as user and admin or any other user that we want , lines connecting the features , <<extend>> if this features allows anything ---> dotted line from extended feature to current feature 
+** also we want to add <--- we want to add <<includes>> feature which show the feature that has to be there for current feature to run 
+---> from current feature to the feature that wants to include it 
+ also keep everything in a box showing the system boundaries 
+actor , functionalities , behaviour of the designed system 
+
+sequence diagram : 
+** we will show objects at top here , in rectangular boxes with underline in the name 
+** we will draw vertical dotted lines from each box , and a thick rectangular box to show activity period 
+** from one object activity period to another object activity period request is solid line , and response is dotted line 
+** it shows the sequences of request and repsonses , giving the full picture of dataflow and activitiy in the app that has to be tracked 
+
+component diagram
+** rectangular boxes are components , edges are relationships 
+** ----> dotted line from a to b component shows that a uses b 
+** a o--- symbol is used to show the services that component provides <<ui>> shows that it is a user interface 
+
+class diagrams 
+
+** there are boxes , each box has 3 divisions , first the name of the class , then the attributes with datatypes use + or - to show each attribute 
+** then the third box is the methods box use + only and also write in one word what that method does , connect each box 
+-----> empty trinaggular box shows is a parent of , child and parent classes relationships can also be shown her e
+and dependency relationship shows ----> filled triangle 
